@@ -1,14 +1,38 @@
 #include <iostream>
 #include <pthread.h>
+#include <vector>
+#include <fstream>
 
 using namespace std;
 
 //global variables
 int teamOnePlayers = 0;
 int teamTwoPlayers = 0;
-int row = 0;
-int col = 0;
+int row = 10;
+int col = 10;
+vector<vector<int>> map(row, vector<int>(col));
 
+void saveMap(const char* filename){
+    //open the file in binary mode
+    ofstream file(filename, ios::binary);
+
+    //write the map data to the file
+    for(const auto& width : map){
+        file.write(reinterpret_cast<const char*> (&width[0]), col * sizeof(int));
+    }
+
+    //close the file
+    file.close();
+}
+void loadMap(const char* filename){
+    //open the file in binary mode
+    ifstream file(filename, ios::binary);
+
+    //read the map data from the file
+    for(auto& width : map){
+        file.read(reinterpret_cast<char*> (&width[0]), col * sizeof(int));
+    }
+}
 void printWhatsMissing(int argc){
     //check if they typed anything in, print what they need and exit
     if (argc < 2) {
@@ -85,13 +109,29 @@ void getPlayersAndBoard(int  argc, char **argv) {
         exit(0);
     }
 }
-int main(int argc, char * argv[]) {
-    getPlayersAndBoard(argc, argv);
 
-    cout << "Team 1 Players: " << teamOnePlayers
-         << "\nTeam 2 Players: " << teamTwoPlayers
-         << "\nRow: " << row
-         << "\nColumns: " << col << "\n";
+int main(int argc, char * argv[]) {
+    //getPlayersAndBoard(argc, argv);
+
+    map[3][5] = 1;
+    map[7][2] = 2;
+
+    saveMap("map.bin");
+
+    map.clear();
+
+
+    map.resize(row, vector<int>(col));
+
+    loadMap("map.bin");
+
+    for(const auto& width : map){
+        for (int value : width){
+            cout << value << " ";
+        }
+        cout << endl;
+    }
+
 
     return 0;
 }
