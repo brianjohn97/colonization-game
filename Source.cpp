@@ -13,7 +13,7 @@ int teamOnePlayers = 2;
 int teamTwoPlayers = 2;
 int row = 5;
 int col = 5;
-vector<vector<string>> board;
+vector<vector<string>> board(row, vector<string>(col));
 string winner = "0";
 vector<int> places;
 
@@ -47,8 +47,8 @@ void saveMap(const char* filename){
     ofstream file(filename, ios::binary);
 
     //write the map data to the file
-    for(const auto& width : board){
-        file.write(reinterpret_cast<const char*> (&width[0]), col * sizeof(int));
+    for(const auto& x: board){
+        file.write(reinterpret_cast<const char*> (&x[0]), row * sizeof(int));
     }
 
     //close the file
@@ -59,8 +59,8 @@ void loadMap(const char* filename){
     ifstream file(filename, ios::binary);
 
     //read the map data from the file
-    for(auto& width : board){
-        file.read(reinterpret_cast<char*> (&width[0]), col * sizeof(int));
+    for(auto& x : board){
+        file.read(reinterpret_cast<char*> (&x[0]), row * sizeof(int));
     }
 }
 void printWhatsMissing(int argc){
@@ -248,6 +248,7 @@ void printStart(){
         places.push_back(y);
     }
     printBoard();
+    cout << "done\n";
     cout << endl;
 }
 void missile(){
@@ -280,13 +281,23 @@ int main(int argc, char * argv[]) {
 
     for(int i=0;i < row;i++){
         for (int j = 0; j < col; j++){
-            temp.push_back({"0"});
+            board[i][j] = "0";
         }
-        board.push_back(temp);
+        
     }
     
+
+
     printStart();
 
+    saveMap("board.bin");
+    board.clear();
+    board.resize(col, vector<string>(row));
+
+    printBoard();
+    cout << "done\n";
+    loadMap("board.bin");
+    printBoard();
     
     
     /*
@@ -299,6 +310,6 @@ int main(int argc, char * argv[]) {
     
     
 
-    board.clear();
+    //board.clear();
     return 0;
 }
