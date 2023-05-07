@@ -17,6 +17,31 @@ vector<vector<string>> board;
 string winner = "0";
 vector<int> places;
 
+void printBoard(){
+    //print the numbers for the columns
+    for (int i = 0; i < row; i++){
+            if(i == 0){
+                cout << "  " <<  i << "\t"; 
+                continue;   
+            }
+            cout << "  " <<  i << "\t";
+    }
+    cout << endl;
+
+    //print out elements 
+    for(int i = 0; i< row;i++){
+        //if(i > 9){cout << i << " ";}
+        //else{cout << i << "  ";}
+        for (int j=0;j<col;j++){
+            if(board[i][j] != "0"){
+                cout << "["  << board[i][j] << " ]\t";
+                continue;
+            }
+            cout << "[ "  << board[i][j] << " ]\t";
+        }
+        cout << endl;
+    }
+}
 void saveMap(const char* filename){
     //open the file in binary mode
     ofstream file(filename, ios::binary);
@@ -107,8 +132,13 @@ void getPlayersAndBoard(int  argc, char **argv) {
         exit(0);
     }
 
+    if(row <= 2 || col <= 2){
+        cout << "The Board size is too small to play!\n";
+        exit(0);
+    }
+
     //check if they inputted a 0 for either team and exit
-    if(teamTwoPlayers == 0 || teamOnePlayers == 0){
+    if(teamTwoPlayers <= 0 || teamOnePlayers <= 0){
         cout << "\nThere needs to be at least 1 player on each team to play this game.\n";
         cout << "Try again with an appropriate amount of players for the game.\n\n";
         exit(0);
@@ -196,46 +226,29 @@ void placingPlayers(int player, int x, int y){
 }
 void printStart(){
     
-    
-
     srand(static_cast<unsigned int>(time(0)));
     cout << "\nThe goal of the colonization game is to" 
-           "\nconquer the rectangular map from the opposite team!\n\n";
+            "\nconquer the rectangular map from the opposite team!\n"
+            "These are the starting positions for all the players.\n\n";
     for (int i = 1; i <= (teamOnePlayers + teamTwoPlayers); i++){
+        bool flag = false;
         int x = rand() % row;
         int y = rand() % col;
-        for (int i = 0; i < places.size(); i++){
-            if(x == places[i] || y == places[i]){
-                continue;
+        for (int j = 0; j < places.size(); j++){
+            if(x == places[j] && y == places[j+1]){
+                i--;
+                flag = true;
+                break;
             }
+            j++;
         }
-        
+        if (flag == true){continue;}
         placingPlayers(i, x, y);
+        places.push_back(x);
+        places.push_back(y);
     }
-    for (int i = 0; i < row; i++){
-            if(i == 0){
-                cout << "     " <<  i << "\t"; 
-                continue;   
-            }
-            cout << "  " <<  i << "\t";
-    }
+    printBoard();
     cout << endl;
-
-
-    for(int i = 0; i< row;i++){
-        //if(i > 9){cout << i << " ";}
-        //else{cout << i << "  ";}
-        for (int j=0;j<col;j++){
-            if(board[i][j] != "0"){
-                cout << "["  << board[i][j] << " ]\t";
-                continue;
-            }
-            cout << "[ "  << board[i][j] << " ]\t";
-        }
-        cout << endl;
-    }
-    
-    
 }
 void missile(){
 
@@ -257,11 +270,12 @@ void * supervisor(void * ThreadID){
     }
     return (void*)0;
 }
+
 int main(int argc, char * argv[]) {
-    cout << "hertjh";
-    
+
     //getPlayersAndBoard(argc, argv);
     
+    //create board
     vector<string> temp;
 
     for(int i=0;i < row;i++){
@@ -270,7 +284,6 @@ int main(int argc, char * argv[]) {
         }
         board.push_back(temp);
     }
-    cout<< "initailized!";
     
     printStart();
 
