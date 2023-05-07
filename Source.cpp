@@ -9,11 +9,11 @@
 using namespace std;
 
 //global variables
-int teamOnePlayers;
-int teamTwoPlayers;
-int row;
-int col;
-vector<vector<string>> board(row, vector<string>(col));
+int teamOnePlayers = 2;
+int teamTwoPlayers = 2;
+int row = 5;
+int col = 5;
+vector<vector<string>> board;
 string winner = "0";
 vector<int> places;
 
@@ -202,8 +202,8 @@ void printStart(){
     cout << "\nThe goal of the colonization game is to" 
            "\nconquer the rectangular map from the opposite team!\n\n";
     for (int i = 1; i <= (teamOnePlayers + teamTwoPlayers); i++){
-        int x = rand() % 10;
-        int y = rand() % 10;
+        int x = rand() % row;
+        int y = rand() % col;
         for (int i = 0; i < places.size(); i++){
             if(x == places[i] || y == places[i]){
                 continue;
@@ -212,9 +212,25 @@ void printStart(){
         
         placingPlayers(i, x, y);
     }
-    for(const auto& width : board){
-        for (string value : width){
-            cout << "[ " << value << " ]";
+    for (int i = 0; i < row; i++){
+            if(i == 0){
+                cout << "     " <<  i << "\t"; 
+                continue;   
+            }
+            cout << "  " <<  i << "\t";
+    }
+    cout << endl;
+
+
+    for(int i = 0; i< row;i++){
+        //if(i > 9){cout << i << " ";}
+        //else{cout << i << "  ";}
+        for (int j=0;j<col;j++){
+            if(board[i][j] != "0"){
+                cout << "["  << board[i][j] << " ]\t";
+                continue;
+            }
+            cout << "[ "  << board[i][j] << " ]\t";
         }
         cout << endl;
     }
@@ -244,37 +260,32 @@ void * supervisor(void * ThreadID){
 int main(int argc, char * argv[]) {
     cout << "hertjh";
     
-    getPlayersAndBoard(argc, argv);
-    cout << "team 1 players: " << teamOnePlayers << endl;
-    cout << "team 2 players: " << teamTwoPlayers << endl;
-    cout << "rows: " << row << endl;
-    cout << "columns: " << col << endl;
+    //getPlayersAndBoard(argc, argv);
+    
+    vector<string> temp;
 
-    /*
-    for (int i=0;i<row;i++){
-        cout << "first for loop";
+    for(int i=0;i < row;i++){
         for (int j = 0; j < col; j++){
-            cout << "second for loop";
-            board[i][j] = "00";
+            temp.push_back({"0"});
         }
-        
+        board.push_back(temp);
     }
-
-
+    cout<< "initailized!";
+    
     printStart();
 
     
     
-    
+    /*
     //pthread_t myThreads[10];
 
     /*
     for (int i = 1; i <= teamOnePlayers + teamTwoPlayers; i++){
         int rval = pthread_create(&myThreads[i], NULL, player, (void *)(long)i);    
-    }
+    }*/
     
     
 
-    board.clear();*/
+    board.clear();
     return 0;
 }
