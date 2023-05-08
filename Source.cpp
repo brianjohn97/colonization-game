@@ -5,18 +5,40 @@
 #include <stdlib.h>
 #include <ctime>
 #include <cstring>
+#include <unistd.h>
+#include <string.h>
+#include <mutex>
 
 using namespace std;
 
 //global variables
 int teamOnePlayers = 2;
 int teamTwoPlayers = 2;
-int row = 5;
-int col = 5;
+
+int row = 4;
+int col = 4;
+vector<int> teamOne;
+vector<int> teamTwo;
 vector<vector<string>> board(row, vector<string>(col));
 string winner = "0";
 vector<int> places;
+bool gameIsOver = false;
+pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
+int thePlayer = 1;
 
+void checkWinner(){
+    
+}
+void split(){
+    for (int i = 1; i <= (teamOnePlayers+teamTwoPlayers); i++){
+        if(i <= teamOnePlayers){
+            teamOne.push_back(i);
+            continue;
+        }
+        teamTwo.push_back(i);
+    }
+    
+}
 void printBoard(){
     //print the numbers for the columns
     for (int i = 0; i < row; i++){
@@ -41,27 +63,56 @@ void printBoard(){
         }
         cout << endl;
     }
+    cout << endl;
 }
 void saveMap(const char* filename){
     //open the file in binary mode
-    ofstream file(filename, ios::binary);
+    //ofstream file(filename, ios::binary);
 
     //write the map data to the file
-    for(const auto& x: board){
-        file.write(reinterpret_cast<const char*> (&x[0]), row * sizeof(int));
-    }
+    //for(const auto& x: board){
+        //file.write(reinterpret_cast<const char*> (&x[0]), row * sizeof(int));
+    //}
+    // ofstream files;
+    // files.open(filename, ios::out | ios::trunc | ios::binary);
+	// files.write((char*)&sizes, sizeof(sizes));
+    // files.close();
+    // files.open(filename, ios::out | ios::app | ios::binary);
+    
 
-    //close the file
-    file.close();
+
+    // for(size_t b =0;b<board.size(); b++){
+    //     files.write((char*)&board[b][0], board[b].size()*sizeof(string));
+    // }
+
+    // //close the file
+    // files.close();
 }
 void loadMap(const char* filename){
     //open the file in binary mode
-    ifstream file(filename, ios::binary);
+    //ifstream file(filename, ios::binary);
 
     //read the map data from the file
-    for(auto& x : board){
-        file.read(reinterpret_cast<char*> (&x[0]), row * sizeof(int));
-    }
+    //for(auto& x : board){
+        //file.read(reinterpret_cast<char*> (&x[0]), row * sizeof(int));
+    //}
+    // vector<vector<string>> numbers2;
+    // int sizes2[2];
+    // ifstream file1;
+    // file1.open(filename, ios::in | ios::binary);
+    // file1.read((char*)&sizes2, sizeof(sizes2));
+
+    // string temp;
+	// for (int x = 0; x < row; x++) {
+	// 	numbers2.push_back(vector<string>());
+	// 	for (int y = 0; y < col; y++) {
+	// 		file1.read((char*)&temp, sizeof(string));
+	// 		numbers2[x].push_back(temp);
+	// 		cout << numbers2.at(x).at(y) << " ";
+	// 	}
+	// 	cout << endl;
+    // }
+    // file1.close();
 }
 void printWhatsMissing(int argc){
     //check if they typed anything in, print what they need and exit
@@ -132,7 +183,7 @@ void getPlayersAndBoard(int  argc, char **argv) {
         exit(0);
     }
 
-    if(row <= 2 || col <= 2){
+    if(row < 2 || col < 2){
         cout << "The Board size is too small to play!\n";
         exit(0);
     }
@@ -248,19 +299,70 @@ void printStart(){
         places.push_back(y);
     }
     printBoard();
-    cout << "done\n";
     cout << endl;
+    split();
+    cout << "Team 1: Players: ";
+    for (int i = 0; i < teamOne.size(); i++){
+        cout << teamOne[i] <<" ";
+    }
+    cout << endl;
+    cout << "Team 2: Players: ";
+    for (int i = 0; i < teamTwo.size(); i++){
+        cout << teamTwo[i] << " ";
+    }
+    cout << endl << endl;
 }
 void missile(){
 
 }
-void * player(void * threadID){
+void * player(void * arg){
+    int threadID = (int)(long)arg;
+    pthread_mutex_lock(&myMutex);
+    cout << "this is pthread: " << threadID<< endl;
+    
+    int i=1;
+    while (1){
+        while(thePlayer != threadID);
+        bool flag = false;
+        int x = rand() % row;
+        int y = rand() % col;
+        for (int j = 0; j < places.size(); j++){
+            if(x == places[j] && y == places[j+1]){
+                flag = true;
+                break;
+            }
+            j++;
+        }
+        if (flag == true){
+            continue;
+        }
+        cout << "P"<<threadID << " launched a missisle to coordinate"
+        "["<<x<<"]["<<y<<"]!\n";
+        placingPlayers(threadID, x, y);
+        printBoard();
+        sleep(3);
+        pthread_mutex_unlock(&myMutex);
+        if(thePlayer == (teamOnePlayers+teamTwoPlayers)){
+            thePlayer = 1;
+            continue;
+        }
+        thePlayer++;
+    }
     
     return (void*)0;
-}
-void * supervisor(void * ThreadID){
-    //will check if the game has ended
     
+}
+void supervisor(){
+    //will check if the game has ended
+    int counter = 0;
+    for (int i=0; i<row;i++){
+        for(int j=0;j<col;j++){
+            if(board[i][j] == "0"){counter++;}
+        }
+    }
+    if(counter == 0){
+        gameIsOver = true;
+    }
     //send signal to the players that the game is over and to stop shooting missiles
 
     //pronounce winner
@@ -269,13 +371,15 @@ void * supervisor(void * ThreadID){
     }else if(winner == "2"){
         cout << "\nTeam 2 has won the game! If you would would to retry restart the game with the same parameters\n";
     }
-    return (void*)0;
+    //return (void*)0;
 }
 
 int main(int argc, char * argv[]) {
-
+    srand(static_cast<unsigned int>(time(0)));
     //getPlayersAndBoard(argc, argv);
-    
+    int totalPlayers = teamOnePlayers + teamTwoPlayers;
+
+
     //create board
     vector<string> temp;
 
@@ -285,28 +389,21 @@ int main(int argc, char * argv[]) {
         }
         
     }
-    
-
 
     printStart();
+    supervisor();
+    cout << endl;
 
-    saveMap("board.bin");
-    board.clear();
-    board.resize(col, vector<string>(row));
-
-    printBoard();
-    cout << "done\n";
-    loadMap("board.bin");
-    printBoard();
     
-    
-    /*
-    //pthread_t myThreads[10];
+    pthread_t myThreads[totalPlayers];
 
-    /*
-    for (int i = 1; i <= teamOnePlayers + teamTwoPlayers; i++){
-        int rval = pthread_create(&myThreads[i], NULL, player, (void *)(long)i);    
-    }*/
+    
+    for (int i = 1; i <= totalPlayers; i++){
+        int rval = pthread_create(&myThreads[i], 0, player, (void *)(long)i);    
+    }
+    for (int i = 1; i < totalPlayers; i++){
+        pthread_join(myThreads[i], NULL);
+    }
     
     
 
