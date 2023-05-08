@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <mutex>
+#include <atomic>
 
 using namespace std;
 
@@ -25,6 +26,7 @@ vector<int> places;
 bool gameIsOver = false;
 pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
 int thePlayer = 1;
+
 
 void checkWinner(){
     
@@ -312,17 +314,26 @@ void printStart(){
     }
     cout << endl << endl;
 }
-void missile(){
+void missile(int player, int x, int y){
 
+    for(int i=1;i <= (teamOnePlayers + teamTwoPlayers); i++){
+        if(player == teamOne[i]){
+            board[x][y] = "T1";
+            break;
+        }
+        if (player == teamTwo[i]){
+            board[x][y] = "T2";
+            break;
+        }
+    }
 }
 void * player(void * arg){
     int threadID = (int)(long)arg;
     pthread_mutex_lock(&myMutex);
-    cout << "this is pthread: " << threadID<< endl;
-    
-    int i=1;
-    while (1){
+
+    while (!gameIsOver){
         while(thePlayer != threadID);
+        if(gameIsOver){ cout << "here!"; return (void*)0;}
         bool flag = false;
         int x = rand() % row;
         int y = rand() % col;
@@ -333,12 +344,12 @@ void * player(void * arg){
             }
             j++;
         }
-        if (flag == true){
+        if (flag){
             continue;
         }
         cout << "P"<<threadID << " launched a missisle to coordinate"
         "["<<x<<"]["<<y<<"]!\n";
-        placingPlayers(threadID, x, y);
+        missile(threadID, x, y);
         printBoard();
         sleep(3);
         pthread_mutex_unlock(&myMutex);
@@ -352,17 +363,22 @@ void * player(void * arg){
     return (void*)0;
     
 }
-void supervisor(){
+void * supervisor(void * arg){
     //will check if the game has ended
-    int counter = 0;
-    for (int i=0; i<row;i++){
-        for(int j=0;j<col;j++){
-            if(board[i][j] == "0"){counter++;}
+    while(true){
+        int counter = 0;
+        for (int i=0; i<row;i++){
+            for(int j=0;j<col;j++){
+                if(board[i][j] == "0"){counter++;}
+            }
+        }
+        if(counter == 0){
+            gameIsOver = true;
+            break;
         }
     }
-    if(counter == 0){
-        gameIsOver = true;
-    }
+    cout << "you won!\n";
+
     //send signal to the players that the game is over and to stop shooting missiles
 
     //pronounce winner
@@ -371,7 +387,7 @@ void supervisor(){
     }else if(winner == "2"){
         cout << "\nTeam 2 has won the game! If you would would to retry restart the game with the same parameters\n";
     }
-    //return (void*)0;
+    return (void*)0;
 }
 
 int main(int argc, char * argv[]) {
@@ -391,20 +407,20 @@ int main(int argc, char * argv[]) {
     }
 
     printStart();
-    supervisor();
+
     cout << endl;
 
-    
+    pthread_t supThread;
     pthread_t myThreads[totalPlayers];
 
-    
+    pthread_create(&supThread, 0, supervisor, NULL);
     for (int i = 1; i <= totalPlayers; i++){
-        int rval = pthread_create(&myThreads[i], 0, player, (void *)(long)i);    
+        pthread_create(&myThreads[i], 0, player, (void *)(long)i);
     }
     for (int i = 1; i < totalPlayers; i++){
         pthread_join(myThreads[i], NULL);
     }
-    
+    cout << "here!\n";
     
 
     //board.clear();
