@@ -28,9 +28,7 @@ pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
 int thePlayer = 1;
 
 
-void checkWinner(){
-    
-}
+
 void split(){
     for (int i = 1; i <= (teamOnePlayers+teamTwoPlayers); i++){
         if(i <= teamOnePlayers){
@@ -38,8 +36,7 @@ void split(){
             continue;
         }
         teamTwo.push_back(i);
-    }
-    
+    } 
 }
 void printBoard(){
     //print the numbers for the columns
@@ -316,7 +313,7 @@ void printStart(){
 }
 void missile(int player, int x, int y){
 
-    for(int i=1;i <= (teamOnePlayers + teamTwoPlayers); i++){
+    for(int i=0;i < (teamOnePlayers + teamTwoPlayers); i++){
         if(player == teamOne[i]){
             board[x][y] = "T1";
             break;
@@ -359,7 +356,6 @@ void * player(void * arg){
         }
         thePlayer++;
     }
-    
     return (void*)0;
     
 }
@@ -377,7 +373,19 @@ void * supervisor(void * arg){
             break;
         }
     }
-    cout << "you won!\n";
+    int teamOneScore = 0;
+    int teamTwoScore = 0;
+    for (int i=0; i<row;i++){
+            for(int j=0;j<col;j++){
+                if(board[i][j] == "T1"){teamOneScore++;}
+                if(board[i][j] == "T2"){teamTwoScore++;}
+            }
+    }
+    if(teamOneScore > teamTwoScore){
+        winner = "1";
+    }else if (teamTwoScore > teamOneScore){
+        winner = "2";
+    }else{winner = "3";}
 
     //send signal to the players that the game is over and to stop shooting missiles
 
@@ -386,6 +394,9 @@ void * supervisor(void * arg){
         cout << "\nTeam 1 has won the game! If you would would to retry restart the game with the same parameters\n";
     }else if(winner == "2"){
         cout << "\nTeam 2 has won the game! If you would would to retry restart the game with the same parameters\n";
+    }else if(winner == "3"){
+        cout << "\nUnfortunately there was no winner! Theres also no losers! It was a tie!\n"
+                "If you would like to retry, then restart the game with the same parameters. \n";
     }
     return (void*)0;
 }
