@@ -26,7 +26,9 @@ vector<int> places;
 bool gameIsOver = false;
 pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
 int thePlayer = 1;
-
+int teamOneScore = 0;
+int teamTwoScore = 0;
+int totalTurns = 0;
 
 
 void split(){
@@ -193,6 +195,7 @@ void getPlayersAndBoard(int  argc, char **argv) {
         cout << "Try again with an appropriate amount of players for the game.\n\n";
         exit(0);
     }
+    //totalTurns = row * col;
 }
 void updateBoard(){
 
@@ -312,25 +315,126 @@ void printStart(){
     cout << endl << endl;
 }
 void missile(int player, int x, int y){
-
+    int t1 = 0;
+    int t2 = 0;
     for(int i=0;i < (teamOnePlayers + teamTwoPlayers); i++){
         if(player == teamOne[i]){
+            if(board[x][y] == "T1"){teamOneScore--;board[x][y] = "0";break;}
             board[x][y] = "T1";
+            teamOneScore++;
+            t1++;
+
+            for (int j = 0; j < 8; ++j) {
+                //check the left
+                if(y > 0){
+                    if(board[x][y-1] == "T1"){t1++;}else if(board[x][y-1] == "T2"){t2++;}
+                }
+                //check the right
+                if(y < col-1){
+                    if(board[x][y+1] == "T1"){t1++;}else if(board[x][y+1] == "T2"){t2++;}
+                }
+                //check above
+                if(x > 0){
+                    if(board[x-1][y] == "T1"){t1++;}else if(board[x-1][y] == "T2"){t2++;}
+                }
+                //check below
+                if(x < row-1){
+                    if(board[x+1][y] == "T1"){t1++;}else if(board[x+1][y] == "T2"){t2++;}
+                }
+                //check above to the left
+                if(x > 0 && col > 0){
+                    if(board[x-1][y-1] == "T1"){t1++;}else if(board[x-1][y-1] == "T2"){t2++;}
+                }
+                //check above to the right
+                if(x > 0 && y < col-1){
+                    if(board[x-1][y+1] == "T1"){t1++;}else if(board[x-1][y+1] == "T2"){t2++;}
+                }
+                //check below and to the left
+                if(x < (row-1) && y > 0){
+                    if(board[x+1][y-1] == "T1"){t1++;}else if(board[x+1][y-1] == "T2"){t2++;}
+                }
+                //check below and to the right
+                if(x < (row - 1) && y < (col - 1)){
+                    if(board[x+1][y+1] == "T1"){t1++;}else if(board[x+1][y+1] == "T2"){t2++;}
+                }
+            }
+            if(t2 == 0){break;}
+            if(t1 > t2){
+                //place all the pieces for team 1
+                board[x+1][y+1] = "T1"; teamOneScore++;
+                board[x+1][y-1] = "T1"; teamOneScore++;
+                board[x-1][y+1] = "T1"; teamOneScore ++;
+                board[x-1][y-1] = "T1"; teamOneScore++;
+                board[x+1][y] = "T1"; teamOneScore++;
+                board[x-1][y] = "T1"; teamOneScore++;
+                board[x][y+1] = "T1"; teamOneScore++;
+                board[x][y-1] = "T1"; teamOneScore++;
+                break;
+            }
             break;
         }
         if (player == teamTwo[i]){
+            if(board[x][y] == "T2"){teamTwoScore--;board[x][y] = "0";break;}
             board[x][y] = "T2";
+            teamTwoScore++;
+            t2++;
+            for (int j = 0; j < 8; ++j) {
+                //check the left
+                if(y > 0){
+                    if(board[x][y-1] == "T2"){t2++;}else if(board[x][y-1] == "T1"){t1++;}
+                }
+                //check the right
+                if(y < col-1){
+                    if(board[x][y+1] == "T2"){t2++;}else if(board[x][y+1] == "T1"){t1++;}
+                }
+                //check above
+                if(x > 0){
+                    if(board[x-1][y] == "T2"){t2++;}else if(board[x-1][y] == "T1"){t1++;}
+                }
+                //check below
+                if(x < row-1){
+                    if(board[x+1][y] == "T2"){t2++;}else if(board[x+1][y] == "T1"){t1++;}
+                }
+                //check above to the left
+                if(x > 0 && col > 0){
+                    if(board[x-1][y-1] == "T2"){t2++;}else if(board[x-1][y-1] == "T1"){t1++;}
+                }
+                //check above to the right
+                if(x > 0 && y < col-1){
+                    if(board[x-1][y+1] == "T2"){t2++;}else if(board[x-1][y+1] == "T1"){t1++;}
+                }
+                //check below and to the left
+                if(x < (row-1) && y > 0){
+                    if(board[x+1][y-1] == "T2"){t2++;}else if(board[x+1][y-1] == "T1"){t1++;}
+                }
+                //check below and to the right
+                if(x < (row - 1) && y < (col - 1)){
+                    if(board[x+1][y+1] == "T2"){t2++;}else if(board[x+1][y+1] == "T1"){t1++;}
+                }
+            }
+            if(t1 == 0){break;}
+            if(t1 > t2){
+                //place all the pieces for team 1
+                board[x+1][y+1] = "T2"; teamTwoScore++;
+                board[x+1][y-1] = "T2"; teamTwoScore++;
+                board[x-1][y+1] = "T2"; teamTwoScore ++;
+                board[x-1][y-1] = "T2"; teamTwoScore++;
+                board[x+1][y] = "T2"; teamTwoScore++;
+                board[x-1][y] = "T2"; teamTwoScore++;
+                board[x][y+1] = "T2"; teamTwoScore++;
+                board[x][y-1] = "T2"; teamTwoScore++;
+                break;
+            }
             break;
         }
     }
 }
 void * player(void * arg){
     int threadID = (int)(long)arg;
-    pthread_mutex_lock(&myMutex);
+
 
     while (!gameIsOver){
         while(thePlayer != threadID);
-        if(gameIsOver){ cout << "here!"; return (void*)0;}
         bool flag = false;
         int x = rand() % row;
         int y = rand() % col;
@@ -346,6 +450,7 @@ void * player(void * arg){
         }
         cout << "P"<<threadID << " launched a missisle to coordinate"
         "["<<x<<"]["<<y<<"]!\n";
+        pthread_mutex_lock(&myMutex);
         missile(threadID, x, y);
         printBoard();
         sleep(3);
@@ -355,49 +460,42 @@ void * player(void * arg){
             continue;
         }
         thePlayer++;
+
     }
     return (void*)0;
     
 }
 void * supervisor(void * arg){
     //will check if the game has ended
-    while(true){
-        int counter = 0;
-        for (int i=0; i<row;i++){
-            for(int j=0;j<col;j++){
-                if(board[i][j] == "0"){counter++;}
-            }
-        }
-        if(counter == 0){
-            gameIsOver = true;
-            break;
-        }
-    }
-    int teamOneScore = 0;
-    int teamTwoScore = 0;
-    for (int i=0; i<row;i++){
-            for(int j=0;j<col;j++){
-                if(board[i][j] == "T1"){teamOneScore++;}
-                if(board[i][j] == "T2"){teamTwoScore++;}
-            }
-    }
-    if(teamOneScore > teamTwoScore){
-        winner = "1";
-    }else if (teamTwoScore > teamOneScore){
-        winner = "2";
-    }else{winner = "3";}
+//    while(!gameIsOver){
+//        if((teamOneScore + teamTwoPlayers) == totalTurns){
+//            gameIsOver = true;
+//        }
+//    }
+//
+//    for (int i=0; i<row;i++){
+//            for(int j=0;j<col;j++){
+//                if(board[i][j] == "T1"){teamOneScore++;}
+//                if(board[i][j] == "T2"){teamTwoScore++;}
+//            }
+//    }
+//    if(teamOneScore > teamTwoScore){
+//        winner = "1";
+//    }else if (teamTwoScore > teamOneScore){
+//        winner = "2";
+//    }else{winner = "3";}
 
     //send signal to the players that the game is over and to stop shooting missiles
 
     //pronounce winner
-    if(winner == "1"){
-        cout << "\nTeam 1 has won the game! If you would would to retry restart the game with the same parameters\n";
-    }else if(winner == "2"){
-        cout << "\nTeam 2 has won the game! If you would would to retry restart the game with the same parameters\n";
-    }else if(winner == "3"){
-        cout << "\nUnfortunately there was no winner! Theres also no losers! It was a tie!\n"
-                "If you would like to retry, then restart the game with the same parameters. \n";
-    }
+//    if(winner == "1"){
+//        cout << "\nTeam 1 has won the game! If you would would to retry restart the game with the same parameters\n";
+//    }else if(winner == "2"){
+//        cout << "\nTeam 2 has won the game! If you would would to retry restart the game with the same parameters\n";
+//    }else if(winner == "3"){
+//        cout << "\nUnfortunately there was no winner! Theres also no losers! It was a tie!\n"
+//                "If you would like to retry, then restart the game with the same parameters. \n";
+//    }
     return (void*)0;
 }
 
@@ -431,9 +529,5 @@ int main(int argc, char * argv[]) {
     for (int i = 1; i < totalPlayers; i++){
         pthread_join(myThreads[i], NULL);
     }
-    cout << "here!\n";
-    
-
-    //board.clear();
     return 0;
 }
