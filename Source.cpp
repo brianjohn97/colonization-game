@@ -16,21 +16,169 @@ using namespace std;
 int teamOnePlayers = 2;
 int teamTwoPlayers = 2;
 
-int row = 4;
-int col = 4;
+int row = 25;
+int col = 25;
 vector<int> teamOne;
 vector<int> teamTwo;
 vector<vector<string>> board(row, vector<string>(col));
 string winner = "0";
 vector<int> places;
 bool gameIsOver = false;
+bool boardIsFull = false;
 pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
 int thePlayer = 1;
 int teamOneScore = 0;
 int teamTwoScore = 0;
 int totalTurns = 0;
 
+//checks all squares next to the fired missile spot
+//and deals with it accordingly
+//takes in the x and y coordinate plus the team number
+void checkAdjacentSquares(int x, int y, int curPlayer){
+    string team;
+    string otherTeam;
+    int t1 = 0;
+    int t2 = 0;
+    if(curPlayer == 1){team = "T1"; otherTeam = "T2";}
+    else{ team = "T2"; otherTeam = "T1"; }
 
+    /*
+    //checks to see if the same team already has that location and to relieve it if they do
+    if(board[x][y] == team){
+        cout << "Landed on space already occupied by "<<team<<"! So you have lost this space!\n\n";
+        teamOneScore--;
+        board[x][y] = "0";
+        return;
+    }*/
+
+    //notify the players that this player has taken over this spot from the enemy
+    if(board[x][y] == otherTeam){ cout << "You have landed on space that was occupied by the enemies and have taken it for your own!\n"; }
+
+    //place piece on the board incrementing their score and the t1 tally
+    board[x][y] = team; t1++;
+    if(team == "T1"){teamOneScore++;}
+    else{teamTwoScore++;}
+
+    //check the left
+    if(y > 0){
+        if(board[x][y-1] == team){t1++;}else if(board[x][y-1] == otherTeam){t2++;}
+    }
+    //check the right
+    if(y < col-1){
+        if(board[x][y+1] == team){t1++;}else if(board[x][y+1] == otherTeam){t2++;}
+    }
+    //check above
+    if(x > 0){
+        if(board[x-1][y] == team){t1++;}else if(board[x-1][y] == otherTeam){t2++;}
+    }
+    //check below
+    if(x < row-1){
+        if(board[x+1][y] == team){t1++;}else if(board[x+1][y] == otherTeam){t2++;}
+    }
+    //check above to the left
+    if(x > 0 && y > 0){
+        if(board[x-1][y-1] == team){t1++;}else if(board[x-1][y-1] == otherTeam){t2++;}
+    }
+    //check above to the right
+    if(x > 0 && y < (col-1)){
+        if(board[x-1][y+1] == team){t1++;}else if(board[x-1][y+1] == otherTeam){t2++;}
+    }
+    //check below and to the left
+    if(x < (row-1) && y > 0){
+        if(board[x+1][y-1] == team){t1++;}else if(board[x+1][y-1] == otherTeam){t2++;}
+    }
+    //check below and to the right
+    if(x < (row - 1) && y < (col - 1)){
+        if(board[x+1][y+1] == team){t1++;}else if(board[x+1][y+1] == otherTeam){t2++;}
+    }
+
+    if(t2 == 0){ return; }
+    if(t1 > t2){
+        //place all pieces that it can depending on location
+        cout << "The current team has the majority surrounding [" << x << "][" << y <<"] so it will take all adjacent squares with it!\n";
+        if(y > 0){
+            if(board[x][y-1] == "T1" || board[x][y-1] == "T2"){board[x][y-1] = team;}
+            if(curPlayer == 1){
+                teamOneScore++;
+                if(board[x][y-1] == "T2"){teamTwoScore--;}
+            }else{
+                teamTwoScore++;
+                if(board[x][y-1] == "T1"){teamOneScore--;}}
+        }
+        if(y < col-1){
+            if(board[x][y+1] == "T1" || board[x][y+1] == "T2"){board[x][y+1] = team;}
+            if(curPlayer == 1){
+                teamOneScore++;
+                if(board[x][y+1] == "T2"){teamTwoScore--; }
+            }else{
+                teamTwoScore++;
+                if(board[x][y+1]  == "T1"){teamOneScore--;}}
+        }
+        if(x > 0){
+            if(board[x-1][y] == "T1" || board[x-1][y] == "T2"){board[x-1][y] = team;}
+            if(curPlayer == 1){
+                teamOneScore++;
+                if(board[x-1][y] == "T2"){teamTwoScore--;}
+            }else{
+                teamTwoScore++;
+                if(board[x-1][y] == "T1"){teamOneScore--;}
+            }
+        }
+        if(x < row-1){
+            if(board[x+1][y] == "T1" || board[x+1][y] == "T2"){board[x+1][y] = team;}
+            if(curPlayer == 1){
+                teamOneScore++;
+                if(board[x+1][y] == "T2"){teamTwoScore--;}
+            }else{
+                teamTwoScore++;
+                if(board[x+1][y] == "T1"){teamOneScore--;}
+            }
+        }
+        if(x > 0 && y > 0){
+            if(board[x-1][y-1] == "T1" || board[x-1][y-1] == "T2"){board[x-1][y-1] = team;}
+            if(curPlayer == 1){
+                teamOneScore++;
+                if(board[x-1][y-1] == "T2") {teamTwoScore--;}
+            }else{
+                teamTwoScore++;
+                if(board[x-1][y-1] == "T1"){teamOneScore--;}
+            }
+        }
+        if(x > 0 && y < (col-1)){
+            if(board[x-1][y+1] == "T1" || board[x-1][y+1] == "T2"){board[x-1][y+1] = team;}
+            if(curPlayer == 1){
+                teamOneScore++;
+                if(board[x-1][y+1] == "T2"){teamTwoScore--;}
+            }else{
+                teamTwoScore++;
+                if(board[x-1][y+1] == "T1"){teamOneScore--;}
+            }
+        }
+        if(x < (row-1) && y > 0){
+            if(board[x+1][y-1] == "T1" || board[x+1][y-1] == "T2") {board[x+1][y-1] = team;}
+            if(curPlayer == 1){
+                teamOneScore++;
+                if(board[x+1][y-1] == "T2"){teamTwoScore--;}
+            }else{
+                teamTwoScore++;
+                if(board[x+1][y-1] == "T1"){teamOneScore--;}
+            }
+        }
+        if(x < (row - 1) && y < (col - 1)){
+            if(board[x+1][y+1] == "T1" || board[x+1][y+1] == "T2") {board[x+1][y+1] = team;}
+            if(curPlayer == 1){
+                teamOneScore++;
+                if(board[x+1][y+1] == "T2") {teamTwoScore--;}
+            }else{
+                teamTwoScore++;
+                if(board[x+1][y+1] == "T1"){teamOneScore--;}
+            }
+        }
+    }
+}
+
+//puts all the players into two team vectors to make it easier who is
+//on what team
 void split(){
     for (int i = 1; i <= (teamOnePlayers+teamTwoPlayers); i++){
         if(i <= teamOnePlayers){
@@ -40,6 +188,8 @@ void split(){
         teamTwo.push_back(i);
     } 
 }
+
+//prints the current state of the board
 void printBoard(){
     //print the numbers for the columns
     for (int i = 0; i < row; i++){
@@ -53,8 +203,6 @@ void printBoard(){
 
     //print out elements 
     for(int i = 0; i< row;i++){
-        //if(i > 9){cout << i << " ";}
-        //else{cout << i << "  ";}
         for (int j=0;j<col;j++){
             if(board[i][j] != "0"){
                 cout << "["  << board[i][j] << " ]\t";
@@ -66,55 +214,9 @@ void printBoard(){
     }
     cout << endl;
 }
-void saveMap(const char* filename){
-    //open the file in binary mode
-    //ofstream file(filename, ios::binary);
 
-    //write the map data to the file
-    //for(const auto& x: board){
-        //file.write(reinterpret_cast<const char*> (&x[0]), row * sizeof(int));
-    //}
-    // ofstream files;
-    // files.open(filename, ios::out | ios::trunc | ios::binary);
-	// files.write((char*)&sizes, sizeof(sizes));
-    // files.close();
-    // files.open(filename, ios::out | ios::app | ios::binary);
-    
-
-
-    // for(size_t b =0;b<board.size(); b++){
-    //     files.write((char*)&board[b][0], board[b].size()*sizeof(string));
-    // }
-
-    // //close the file
-    // files.close();
-}
-void loadMap(const char* filename){
-    //open the file in binary mode
-    //ifstream file(filename, ios::binary);
-
-    //read the map data from the file
-    //for(auto& x : board){
-        //file.read(reinterpret_cast<char*> (&x[0]), row * sizeof(int));
-    //}
-    // vector<vector<string>> numbers2;
-    // int sizes2[2];
-    // ifstream file1;
-    // file1.open(filename, ios::in | ios::binary);
-    // file1.read((char*)&sizes2, sizeof(sizes2));
-
-    // string temp;
-	// for (int x = 0; x < row; x++) {
-	// 	numbers2.push_back(vector<string>());
-	// 	for (int y = 0; y < col; y++) {
-	// 		file1.read((char*)&temp, sizeof(string));
-	// 		numbers2[x].push_back(temp);
-	// 		cout << numbers2.at(x).at(y) << " ";
-	// 	}
-	// 	cout << endl;
-    // }
-    // file1.close();
-}
+//when the code is run with parameters this will see how many parameters there
+//and print out which it's missing with examples
 void printWhatsMissing(int argc){
     //check if they typed anything in, print what they need and exit
     if (argc < 2) {
@@ -159,6 +261,9 @@ void printWhatsMissing(int argc){
         exit(0);
     }
 }
+
+//This function will use a try catch to convert the command line arguments int variables
+//will also make check to make sure the amount of players per board sie makes sense
 void getPlayersAndBoard(int  argc, char **argv) {
 
     //check if their missing an argument
@@ -186,6 +291,7 @@ void getPlayersAndBoard(int  argc, char **argv) {
 
     if(row < 2 || col < 2){
         cout << "The Board size is too small to play!\n";
+        cout << "Please increase the board size and try again!\n\n";
         exit(0);
     }
 
@@ -195,22 +301,16 @@ void getPlayersAndBoard(int  argc, char **argv) {
         cout << "Try again with an appropriate amount of players for the game.\n\n";
         exit(0);
     }
-    //totalTurns = row * col;
+    totalTurns = row * col;
+    teamOneScore += teamOnePlayers;
+    teamTwoScore += teamTwoPlayers;
 }
-void updateBoard(){
 
-    saveMap("board.bin");
-    board.clear();
-    board.resize(row, vector<string>(col));
-    loadMap("board.bin");
-    for(const auto& width : board){
-        for (string value : width){
-            cout << value << " ";
-        }
-        cout << endl;
-    }
-}
+//takes in the player and their x and y coordinate
 void placingPlayers(int player, int x, int y){
+
+    //takes the current player int and places a string of which player it is
+    //on the board
     switch (player)
     {
     case 1:
@@ -277,12 +377,18 @@ void placingPlayers(int player, int x, int y){
         break;
     }
 }
+
+//starts the game with rules and starting positions
 void printStart(){
     
-    srand(static_cast<unsigned int>(time(0)));
+    //print the goal of the game
     cout << "\nThe goal of the colonization game is to" 
             "\nconquer the rectangular map from the opposite team!\n"
             "These are the starting positions for all the players.\n\n";
+
+    //loops through all the players getting random ints for the coordinates
+    //checking if that spot is already taken. then placing the player and putting the
+    //coordinates into a vector
     for (int i = 1; i <= (teamOnePlayers + teamTwoPlayers); i++){
         bool flag = false;
         int x = rand() % row;
@@ -295,11 +401,14 @@ void printStart(){
             }
             j++;
         }
-        if (flag == true){continue;}
+        if (flag){continue;}
         placingPlayers(i, x, y);
         places.push_back(x);
         places.push_back(y);
     }
+
+    //print the starting board then put the players onto seperate vector teams then print
+    //which player is on what team
     printBoard();
     cout << endl;
     split();
@@ -314,147 +423,59 @@ void printStart(){
     }
     cout << endl << endl;
 }
+
+//called from player thread with coordinates and the player threadID
+//loops through the players calling a function that checks all the squares around the spot the missile fired
+//to see how many of those places are occupied
 void missile(int player, int x, int y){
-    int t1 = 0;
-    int t2 = 0;
+
     for(int i=0;i < (teamOnePlayers + teamTwoPlayers); i++){
         if(player == teamOne[i]){
-            if(board[x][y] == "T1"){teamOneScore--;board[x][y] = "0";break;}
-            board[x][y] = "T1";
-            teamOneScore++;
-            t1++;
-
-            for (int j = 0; j < 8; ++j) {
-                //check the left
-                if(y > 0){
-                    if(board[x][y-1] == "T1"){t1++;}else if(board[x][y-1] == "T2"){t2++;}
-                }
-                //check the right
-                if(y < col-1){
-                    if(board[x][y+1] == "T1"){t1++;}else if(board[x][y+1] == "T2"){t2++;}
-                }
-                //check above
-                if(x > 0){
-                    if(board[x-1][y] == "T1"){t1++;}else if(board[x-1][y] == "T2"){t2++;}
-                }
-                //check below
-                if(x < row-1){
-                    if(board[x+1][y] == "T1"){t1++;}else if(board[x+1][y] == "T2"){t2++;}
-                }
-                //check above to the left
-                if(x > 0 && col > 0){
-                    if(board[x-1][y-1] == "T1"){t1++;}else if(board[x-1][y-1] == "T2"){t2++;}
-                }
-                //check above to the right
-                if(x > 0 && y < col-1){
-                    if(board[x-1][y+1] == "T1"){t1++;}else if(board[x-1][y+1] == "T2"){t2++;}
-                }
-                //check below and to the left
-                if(x < (row-1) && y > 0){
-                    if(board[x+1][y-1] == "T1"){t1++;}else if(board[x+1][y-1] == "T2"){t2++;}
-                }
-                //check below and to the right
-                if(x < (row - 1) && y < (col - 1)){
-                    if(board[x+1][y+1] == "T1"){t1++;}else if(board[x+1][y+1] == "T2"){t2++;}
-                }
-            }
-            if(t2 == 0){break;}
-            if(t1 > t2){
-                //place all the pieces for team 1
-                board[x+1][y+1] = "T1"; teamOneScore++;
-                board[x+1][y-1] = "T1"; teamOneScore++;
-                board[x-1][y+1] = "T1"; teamOneScore ++;
-                board[x-1][y-1] = "T1"; teamOneScore++;
-                board[x+1][y] = "T1"; teamOneScore++;
-                board[x-1][y] = "T1"; teamOneScore++;
-                board[x][y+1] = "T1"; teamOneScore++;
-                board[x][y-1] = "T1"; teamOneScore++;
-                break;
-            }
+            checkAdjacentSquares(x, y, 1);
             break;
         }
         if (player == teamTwo[i]){
-            if(board[x][y] == "T2"){teamTwoScore--;board[x][y] = "0";break;}
-            board[x][y] = "T2";
-            teamTwoScore++;
-            t2++;
-            for (int j = 0; j < 8; ++j) {
-                //check the left
-                if(y > 0){
-                    if(board[x][y-1] == "T2"){t2++;}else if(board[x][y-1] == "T1"){t1++;}
-                }
-                //check the right
-                if(y < col-1){
-                    if(board[x][y+1] == "T2"){t2++;}else if(board[x][y+1] == "T1"){t1++;}
-                }
-                //check above
-                if(x > 0){
-                    if(board[x-1][y] == "T2"){t2++;}else if(board[x-1][y] == "T1"){t1++;}
-                }
-                //check below
-                if(x < row-1){
-                    if(board[x+1][y] == "T2"){t2++;}else if(board[x+1][y] == "T1"){t1++;}
-                }
-                //check above to the left
-                if(x > 0 && col > 0){
-                    if(board[x-1][y-1] == "T2"){t2++;}else if(board[x-1][y-1] == "T1"){t1++;}
-                }
-                //check above to the right
-                if(x > 0 && y < col-1){
-                    if(board[x-1][y+1] == "T2"){t2++;}else if(board[x-1][y+1] == "T1"){t1++;}
-                }
-                //check below and to the left
-                if(x < (row-1) && y > 0){
-                    if(board[x+1][y-1] == "T2"){t2++;}else if(board[x+1][y-1] == "T1"){t1++;}
-                }
-                //check below and to the right
-                if(x < (row - 1) && y < (col - 1)){
-                    if(board[x+1][y+1] == "T2"){t2++;}else if(board[x+1][y+1] == "T1"){t1++;}
-                }
-            }
-            if(t1 == 0){break;}
-            if(t1 > t2){
-                //place all the pieces for team 1
-                board[x+1][y+1] = "T2"; teamTwoScore++;
-                board[x+1][y-1] = "T2"; teamTwoScore++;
-                board[x-1][y+1] = "T2"; teamTwoScore ++;
-                board[x-1][y-1] = "T2"; teamTwoScore++;
-                board[x+1][y] = "T2"; teamTwoScore++;
-                board[x-1][y] = "T2"; teamTwoScore++;
-                board[x][y+1] = "T2"; teamTwoScore++;
-                board[x][y-1] = "T2"; teamTwoScore++;
-                break;
-            }
+            checkAdjacentSquares(x, y, 2);
             break;
         }
     }
 }
+
+//player thread function. loop until the supervisor says the game is over getting random ints
+//checks if a player is already there, locks the thread calls missile function to place the piece then unlocks
+//sleeps to simulate loading each missile
 void * player(void * arg){
     int threadID = (int)(long)arg;
 
-
     while (!gameIsOver){
-        while(thePlayer != threadID);
+
         bool flag = false;
         int x = rand() % row;
         int y = rand() % col;
         for (int j = 0; j < places.size(); j++){
             if(x == places[j] && y == places[j+1]){
                 flag = true;
+                cout << "Fired missile could not land there because a soldier is already in that spot! will roll again!" << endl;
                 break;
             }
             j++;
         }
-        if (flag){
-            continue;
-        }
-        cout << "P"<<threadID << " launched a missisle to coordinate"
-        "["<<x<<"]["<<y<<"]!\n";
+        if (flag){ continue; }
+
+        //for when it's not their turn.
+        while(thePlayer != threadID);
+
+        cout << "P"<<threadID << " launched a missile to coordinate ["<<x<<"]["<<y<<"]!\n\n";
+
         pthread_mutex_lock(&myMutex);
         missile(threadID, x, y);
+        cout << "team1: " << teamOneScore << endl;
+        cout <<"team2: " << teamTwoScore << endl << endl;
         printBoard();
-        sleep(3);
+        sleep(1);
         pthread_mutex_unlock(&myMutex);
+
+        //keeps the current player variable
         if(thePlayer == (teamOnePlayers+teamTwoPlayers)){
             thePlayer = 1;
             continue;
@@ -465,45 +486,90 @@ void * player(void * arg){
     return (void*)0;
     
 }
-void * supervisor(void * arg){
+
+
+void * supervisor(void * arg) {
+
+    //game ends when the board is full AND when one team owns everything or tie
+    // if board is full and both teams owns half the board
+
+    int team1Score = 0;
+    int team2Score = 0;
+    team1Score += teamOnePlayers;
+    team2Score += teamTwoPlayers;
+
+    //int curTurns = teamOnePlayers + teamTwoPlayers;
+
     //will check if the game has ended
-//    while(!gameIsOver){
-//        if((teamOneScore + teamTwoPlayers) == totalTurns){
-//            gameIsOver = true;
-//        }
-//    }
+
+
+    while(!gameIsOver){
+        pthread_mutex_lock(&myMutex);
+        if((teamOneScore + teamTwoScore) == totalTurns){ boardIsFull = true; }
+        while(boardIsFull){
+            if((teamOneScore + teamTwoPlayers) != totalTurns){ boardIsFull = false; break;}
+            if((teamOneScore + teamTwoScore) == totalTurns){gameIsOver = true; winner = "3"; break;}
+            if((teamOneScore + teamTwoPlayers) == totalTurns){gameIsOver = true; winner = "1"; break;}
+            if((teamTwoScore + teamOnePlayers) == totalTurns){gameIsOver = true; winner = "2"; break;}
+        }
+        pthread_mutex_unlock(&myMutex);
+//        int counter = 0;
 //
-//    for (int i=0; i<row;i++){
-//            for(int j=0;j<col;j++){
-//                if(board[i][j] == "T1"){teamOneScore++;}
-//                if(board[i][j] == "T2"){teamTwoScore++;}
+//        for (int i = 0; i < row; ++i) {
+//            for (int j = 0; j < col; ++j) {
+//                if(board[i][j] == "0"){
+//                    counter++;
+//                }
 //            }
-//    }
-//    if(teamOneScore > teamTwoScore){
-//        winner = "1";
-//    }else if (teamTwoScore > teamOneScore){
-//        winner = "2";
-//    }else{winner = "3";}
+//        }
+//
+//        if (counter == 0){
+//            pthread_mutex_lock(&myMutex);
+//            for (int i=0; i<row;i++) {
+//                for (int j = 0; j < col; j++) {
+//
+//                    if (board[i][j] == "T1") { team1Score++; }
+//                    if (board[i][j] == "T2") { team2Score++; }
+//
+//                }
+//            }
+//            break;
+//        }
+    }
+
+
+
+
+    if(team1Score > team2Score){
+        winner = "1";
+    }else if (team2Score > team1Score){
+        winner = "2";
+    }else{winner = "3";}
 
     //send signal to the players that the game is over and to stop shooting missiles
 
     //pronounce winner
-//    if(winner == "1"){
-//        cout << "\nTeam 1 has won the game! If you would would to retry restart the game with the same parameters\n";
-//    }else if(winner == "2"){
-//        cout << "\nTeam 2 has won the game! If you would would to retry restart the game with the same parameters\n";
-//    }else if(winner == "3"){
-//        cout << "\nUnfortunately there was no winner! Theres also no losers! It was a tie!\n"
-//                "If you would like to retry, then restart the game with the same parameters. \n";
-//    }
-    return (void*)0;
+    if(winner == "1"){
+        cout << "\nTeam 1 has won the game! If you would would to retry restart the game with the same parameters\n";
+    }else if(winner == "2"){
+        cout << "\nTeam 2 has won the game! If you would would to retry restart the game with the same parameters\n";
+    }else if(winner == "3"){
+        cout << "\nUnfortunately there was no winner! Theres also no losers! It was a tie!\n"
+                "If you would like to retry, then restart the game with the same parameters. \n";
+    }
+
+    exit(0);
 }
 
 int main(int argc, char * argv[]) {
-    srand(static_cast<unsigned int>(time(0)));
-    //getPlayersAndBoard(argc, argv);
-    int totalPlayers = teamOnePlayers + teamTwoPlayers;
 
+    //creates the random seed
+    srand(static_cast<unsigned int>(time(0)));
+
+    //gets the players and board sizes as command line arguments
+    getPlayersAndBoard(argc, argv);
+
+    int totalPlayers = teamOnePlayers + teamTwoPlayers;
 
     //create board
     vector<string> temp;
@@ -515,10 +581,12 @@ int main(int argc, char * argv[]) {
         
     }
 
+    //puts all the players onto the board randomly/prints the rules of the game
+    //puts the location of the player pieces into a vector
     printStart();
-
     cout << endl;
 
+    //creating the threads
     pthread_t supThread;
     pthread_t myThreads[totalPlayers];
 
