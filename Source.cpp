@@ -24,12 +24,9 @@ vector<vector<string>> board(row, vector<string>(col));
 string winner = "0";
 vector<int> places;
 bool gameIsOver = false;
-bool boardIsFull = false;
 pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
 int thePlayer = 1;
-int teamOneScore = 0;
-int teamTwoScore = 0;
-int totalTurns = 0;
+
 
 //checks all squares next to the fired missile spot
 //and deals with it accordingly
@@ -42,22 +39,21 @@ void checkAdjacentSquares(int x, int y, int curPlayer){
     if(curPlayer == 1){team = "T1"; otherTeam = "T2";}
     else{ team = "T2"; otherTeam = "T1"; }
 
-    /*
+
     //checks to see if the same team already has that location and to relieve it if they do
     if(board[x][y] == team){
         cout << "Landed on space already occupied by "<<team<<"! So you have lost this space!\n\n";
-        teamOneScore--;
         board[x][y] = "0";
         return;
-    }*/
+    }
 
     //notify the players that this player has taken over this spot from the enemy
-    if(board[x][y] == otherTeam){ cout << "You have landed on space that was occupied by the enemies and have taken it for your own!\n"; }
+    if(board[x][y] == otherTeam){
+        cout << "You have landed on space that was occupied by the enemies and have taken it for your own!\n";
+    }
 
     //place piece on the board incrementing their score and the t1 tally
     board[x][y] = team; t1++;
-    if(team == "T1"){teamOneScore++;}
-    else{teamTwoScore++;}
 
     //check the left
     if(y > 0){
@@ -92,87 +88,43 @@ void checkAdjacentSquares(int x, int y, int curPlayer){
         if(board[x+1][y+1] == team){t1++;}else if(board[x+1][y+1] == otherTeam){t2++;}
     }
 
+    int temp = 0;
     if(t2 == 0){ return; }
     if(t1 > t2){
         //place all pieces that it can depending on location
         cout << "The current team has the majority surrounding [" << x << "][" << y <<"] so it will take all adjacent squares with it!\n";
+        //check left
         if(y > 0){
-            if(board[x][y-1] == "T1" || board[x][y-1] == "T2"){board[x][y-1] = team;}
-            if(curPlayer == 1){
-                teamOneScore++;
-                if(board[x][y-1] == "T2"){teamTwoScore--;}
-            }else{
-                teamTwoScore++;
-                if(board[x][y-1] == "T1"){teamOneScore--;}}
-        }
+            if(board[x][y-1] == otherTeam || board[x][y-1] == "0"){board[x][y-1] = team;}
+
+        }//check right
         if(y < col-1){
-            if(board[x][y+1] == "T1" || board[x][y+1] == "T2"){board[x][y+1] = team;}
-            if(curPlayer == 1){
-                teamOneScore++;
-                if(board[x][y+1] == "T2"){teamTwoScore--; }
-            }else{
-                teamTwoScore++;
-                if(board[x][y+1]  == "T1"){teamOneScore--;}}
-        }
+            if(board[x][y+1] == otherTeam || board[x][y+1] == "0" ){board[x][y+1] = team;}
+
+        }//check above
         if(x > 0){
-            if(board[x-1][y] == "T1" || board[x-1][y] == "T2"){board[x-1][y] = team;}
-            if(curPlayer == 1){
-                teamOneScore++;
-                if(board[x-1][y] == "T2"){teamTwoScore--;}
-            }else{
-                teamTwoScore++;
-                if(board[x-1][y] == "T1"){teamOneScore--;}
-            }
-        }
+            if(board[x-1][y] == otherTeam || board[x-1][y] == "0"){board[x-1][y] = team;}
+
+        }//check below
         if(x < row-1){
-            if(board[x+1][y] == "T1" || board[x+1][y] == "T2"){board[x+1][y] = team;}
-            if(curPlayer == 1){
-                teamOneScore++;
-                if(board[x+1][y] == "T2"){teamTwoScore--;}
-            }else{
-                teamTwoScore++;
-                if(board[x+1][y] == "T1"){teamOneScore--;}
-            }
-        }
+            if(board[x+1][y] == otherTeam || board[x+1][y] == "0"){board[x+1][y] = team;}
+
+        }//above to the left
         if(x > 0 && y > 0){
-            if(board[x-1][y-1] == "T1" || board[x-1][y-1] == "T2"){board[x-1][y-1] = team;}
-            if(curPlayer == 1){
-                teamOneScore++;
-                if(board[x-1][y-1] == "T2") {teamTwoScore--;}
-            }else{
-                teamTwoScore++;
-                if(board[x-1][y-1] == "T1"){teamOneScore--;}
-            }
-        }
+            if(board[x-1][y-1] == otherTeam || board[x-1][y-1] == "0"){board[x-1][y-1] = team;}
+
+        }//above to the right
         if(x > 0 && y < (col-1)){
-            if(board[x-1][y+1] == "T1" || board[x-1][y+1] == "T2"){board[x-1][y+1] = team;}
-            if(curPlayer == 1){
-                teamOneScore++;
-                if(board[x-1][y+1] == "T2"){teamTwoScore--;}
-            }else{
-                teamTwoScore++;
-                if(board[x-1][y+1] == "T1"){teamOneScore--;}
-            }
-        }
+            if(board[x-1][y+1] == otherTeam || board[x-1][y+1] == "0"){board[x-1][y+1] = team;}
+
+        }//below to the left
         if(x < (row-1) && y > 0){
-            if(board[x+1][y-1] == "T1" || board[x+1][y-1] == "T2") {board[x+1][y-1] = team;}
-            if(curPlayer == 1){
-                teamOneScore++;
-                if(board[x+1][y-1] == "T2"){teamTwoScore--;}
-            }else{
-                teamTwoScore++;
-                if(board[x+1][y-1] == "T1"){teamOneScore--;}
-            }
-        }
+            if(board[x+1][y-1] == otherTeam || board[x+1][y-1] == "0") {board[x+1][y-1] = team;}
+
+        }//below to the right
         if(x < (row - 1) && y < (col - 1)){
-            if(board[x+1][y+1] == "T1" || board[x+1][y+1] == "T2") {board[x+1][y+1] = team;}
-            if(curPlayer == 1){
-                teamOneScore++;
-                if(board[x+1][y+1] == "T2") {teamTwoScore--;}
-            }else{
-                teamTwoScore++;
-                if(board[x+1][y+1] == "T1"){teamOneScore--;}
-            }
+            if(board[x+1][y+1] == otherTeam || board[x+1][y+1] == "0") {board[x+1][y+1] = team;}
+
         }
     }
 }
@@ -301,9 +253,16 @@ void getPlayersAndBoard(int  argc, char **argv) {
         cout << "Try again with an appropriate amount of players for the game.\n\n";
         exit(0);
     }
-    totalTurns = row * col;
-    teamOneScore += teamOnePlayers;
-    teamTwoScore += teamTwoPlayers;
+    if((teamOnePlayers + teamTwoPlayers) > 20){
+        cout << "\nThere is a max total player count of 20!\n";
+        cout << "\nPlease try again with a total player count of 20 or less! Thank you!\n\n";
+        exit(0);
+    }
+    if(row > 10 || col > 10){
+        cout << "\nThe board is too big! you would be waiting a long time for the game if you go above 10!\n";
+        cout << "\nPlease try again with a more appropriate game board size!\n\n";
+        exit(0);
+    }
 }
 
 //takes in the player and their x and y coordinate
@@ -384,6 +343,7 @@ void printStart(){
     //print the goal of the game
     cout << "\nThe goal of the colonization game is to" 
             "\nconquer the rectangular map from the opposite team!\n"
+            "\nOnce the board is full, we will count how many players on each team there are to determine the winner!\n"
             "These are the starting positions for all the players.\n\n";
 
     //loops through all the players getting random ints for the coordinates
@@ -452,10 +412,13 @@ void * player(void * arg){
         bool flag = false;
         int x = rand() % row;
         int y = rand() % col;
+        int ranSleep = rand() % 3;
+
         for (int j = 0; j < places.size(); j++){
             if(x == places[j] && y == places[j+1]){
                 flag = true;
-                cout << "Fired missile could not land there because a soldier is already in that spot! will roll again!" << endl;
+                if(gameIsOver){break;}
+                cout << "Fired missile could not land there because a soldier is already in that spot! will roll again!\n\n";
                 break;
             }
             j++;
@@ -464,15 +427,14 @@ void * player(void * arg){
 
         //for when it's not their turn.
         while(thePlayer != threadID);
+        if(gameIsOver){break;}
 
         cout << "P"<<threadID << " launched a missile to coordinate ["<<x<<"]["<<y<<"]!\n\n";
 
         pthread_mutex_lock(&myMutex);
         missile(threadID, x, y);
-        cout << "team1: " << teamOneScore << endl;
-        cout <<"team2: " << teamTwoScore << endl << endl;
         printBoard();
-        sleep(1);
+        sleep(ranSleep);
         pthread_mutex_unlock(&myMutex);
 
         //keeps the current player variable
@@ -481,72 +443,54 @@ void * player(void * arg){
             continue;
         }
         thePlayer++;
-
     }
     return (void*)0;
-    
 }
 
-
+//checks if the game is over then figure out who the winner is
+//then print the winner and end the program
 void * supervisor(void * arg) {
-
-    //game ends when the board is full AND when one team owns everything or tie
-    // if board is full and both teams owns half the board
 
     int team1Score = 0;
     int team2Score = 0;
     team1Score += teamOnePlayers;
     team2Score += teamTwoPlayers;
 
-    //int curTurns = teamOnePlayers + teamTwoPlayers;
-
     //will check if the game has ended
-
-
     while(!gameIsOver){
+
+        int counter = 0;
+
+        for (int i = 0; i < row; ++i) {
+            for (int j = 0; j < col; ++j) {
+                if(board[i][j] == "0"){
+                    counter++;
+                }
+            }
+        }
         pthread_mutex_lock(&myMutex);
-        if((teamOneScore + teamTwoScore) == totalTurns){ boardIsFull = true; }
-        while(boardIsFull){
-            if((teamOneScore + teamTwoPlayers) != totalTurns){ boardIsFull = false; break;}
-            if((teamOneScore + teamTwoScore) == totalTurns){gameIsOver = true; winner = "3"; break;}
-            if((teamOneScore + teamTwoPlayers) == totalTurns){gameIsOver = true; winner = "1"; break;}
-            if((teamTwoScore + teamOnePlayers) == totalTurns){gameIsOver = true; winner = "2"; break;}
+        if (counter == 0){
+            gameIsOver = true;
+            for (int i=0; i<row;i++) {
+                for (int j = 0; j < col; j++) {
+
+                    if (board[i][j] == "T1") { team1Score++; }
+                    if (board[i][j] == "T2") { team2Score++; }
+
+                }
+            }
+            break;
         }
         pthread_mutex_unlock(&myMutex);
-//        int counter = 0;
-//
-//        for (int i = 0; i < row; ++i) {
-//            for (int j = 0; j < col; ++j) {
-//                if(board[i][j] == "0"){
-//                    counter++;
-//                }
-//            }
-//        }
-//
-//        if (counter == 0){
-//            pthread_mutex_lock(&myMutex);
-//            for (int i=0; i<row;i++) {
-//                for (int j = 0; j < col; j++) {
-//
-//                    if (board[i][j] == "T1") { team1Score++; }
-//                    if (board[i][j] == "T2") { team2Score++; }
-//
-//                }
-//            }
-//            break;
-//        }
     }
 
-
-
-
+    //get winner
     if(team1Score > team2Score){
         winner = "1";
     }else if (team2Score > team1Score){
         winner = "2";
     }else{winner = "3";}
 
-    //send signal to the players that the game is over and to stop shooting missiles
 
     //pronounce winner
     if(winner == "1"){
@@ -557,7 +501,6 @@ void * supervisor(void * arg) {
         cout << "\nUnfortunately there was no winner! Theres also no losers! It was a tie!\n"
                 "If you would like to retry, then restart the game with the same parameters. \n";
     }
-
     exit(0);
 }
 
