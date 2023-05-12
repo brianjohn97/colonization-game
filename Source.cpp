@@ -258,8 +258,8 @@ void getPlayersAndBoard(int  argc, char **argv) {
         cout << "\nPlease try again with a total player count of 20 or less! Thank you!\n\n";
         exit(0);
     }
-    if(row > 10 || col > 10){
-        cout << "\nThe board is too big! you would be waiting a long time for the game if you go above 10!\n";
+    if(row > 20 || col > 20){
+        cout << "\nThe board is too big! you would be waiting a long time for the game if you go above 20!\n";
         cout << "\nPlease try again with a more appropriate game board size!\n\n";
         exit(0);
     }
