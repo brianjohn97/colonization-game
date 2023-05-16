@@ -27,16 +27,6 @@ vector<int> places;
 bool gameIsOver = false;
 pthread_mutex_t myMutex = PTHREAD_MUTEX_INITIALIZER;
 int thePlayer = 1;
-void test(){
-     
-
-
-
-
-
-
-     
-}
 
 //checks all squares next to the fired missile spot
 //and deals with it accordingly
